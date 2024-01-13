@@ -1,0 +1,5 @@
+======= 2024-01-13 ======= 
+ - Ported the working folder to github
+ - Wrote an optimized algorithm for calculating the variational energy (expectvalue.jl). However the result is wrong for m >= 3 pseudopotential V_3
+ - The ED routine, sphere_FQHE.jl, is somewhat optimized. Have not tested for m >= 3.
+ 
