@@ -10,7 +10,7 @@ using BenchmarkTools
 
 function main(fname="")
     println("----------")
-    println("Full ED of V₁ pseudopotential from a given basis file.")
+    println("Full ED of two-body pseudopotential from a given basis file.")
     println("----------")
 
     if length(fname)==0
@@ -23,12 +23,36 @@ function main(fname="")
     N_o = length(basis[1])
     println("$(N_o) orbitals.")
 
+    println("Input m for Vₘ and the corresponding coefficient. ")
+    println("Each pp term takes one line, with two numbers separated by a space.")
+    println("Put a 0 to end")
+
+
+    v_list = Int32[]
+    c_list = Float64[]
+
+    reading = true
+    while reading
+        data = readline()
+        if data == "0"
+            reading = false
+        else
+            try
+                pp = split(data)
+                push!(v_list,parse(Int32, pp[1]))
+                push!(c_list,parse(Float64,pp[2]))
+            catch
+                println("Invalid input. Try again or input 0 to end.")
+            end
+        end
+    end
+
     #@time basis, dim = getbasis(filewf, N_o, N_e)
 
     println("--------")
     println("Constructing the Hamiltonian")
 
-    @time H_matrix = v1(N_o, basis)#; quiet=true)
+    @time H_matrix = two_body(N_o, basis, v_list, c_list)#; quiet=true)
 
     display(H_matrix)
 
