@@ -15,10 +15,9 @@ function main()
 
 
     println("Input state file name: ")
-    fname = readline()
 
-    state = readwf(fname)
-    
+    state = readwf(readline())
+
     basis = state.basis
     coefs = state.coef
 
@@ -50,7 +49,6 @@ function main()
             end
         end
     end
-
     println("--------")
     println("Constructing the Hamiltonian")
 
