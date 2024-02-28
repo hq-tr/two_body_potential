@@ -1,3 +1,7 @@
+======= 2024-02-28 =======
+ - Added L⁺L⁻ to v1_sphere.jl
+ - Added sphere_FQHE_L2 for ED of L⁺L⁻
+ - sphere_FQHE and sphere_FQHE_L2 now use in-line argument parsing (only tested for sphere_FQHE_L2)
 ======= 2024-01-13 ======= 
  - Ported the working folder to github
  - Wrote an optimized algorithm for calculating the variational energy (expectvalue.jl). However the result is wrong for m >= 3 pseudopotential V_3

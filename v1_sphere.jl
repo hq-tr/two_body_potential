@@ -167,6 +167,7 @@ function update_element!(H_matrix::SparseMatrixCSC{Float64}, N_o::Int64,
 	return
 end
 
+# This is the matrix for two-body interaction given a basis
 function two_body(N_o::Int64, basis::Vector{BitVector},
 				v_list::Vector{Int32}, c_list::Vector{Float64})
 	dim = length(basis)
@@ -186,6 +187,46 @@ function two_body(N_o::Int64, basis::Vector{BitVector},
 	return H_matrix
 end
 
+c₊(s::Number,m::Number) = √(s*(s+1) - m*(m+1))
+c₋(s::Number,m::Number) = √(s*(s+1) - m*(m-1))
+# This is the matrix for L^+ L^- given a basis
+function L⁺L⁻(basis::Vector{BitVector})
+	dim = length(basis)
+	N_o = length(basis[1])
+	println("The dimension is $(dim)")
+	s = (N_o-1)/2
+	println("s = $s")
+	H_matrix = spzeros(dim, dim)
+	for i in 1:dim
+		#print("\rRow $(i+1)\t\t")
+		# Diagonal term]
+		print("\r$i\t$i\t\t")
+		possibles = findall(basis[i][2:end] .& .!basis[i][1:end-1])
+		H_matrix[i,i] = sum(m->c₋(s,m-s)c₊(s,m-1-s), possibles)
+		for j in (i+1):dim
+			print("\r$i\t$j\t\t")
+			b = basis[i] .⊻ basis[j]
+			
+			if sum(b) == 4
+				ms = findall(b) .- 1
+				if abs(ms[2]-ms[1])==1
+					H_matrix[i,j] = c₊(s,ms[1]-s)*c₋(s,ms[end]-s)
+					H_matrix[j,i] = H_matrix[i,j]
+				end
+			end
+		end
+	end
+#	display(H_matrix)
+	return H_matrix
+end
+
+LplusLminus = L⁺L⁻
+LL = L⁺L⁻
+
+
+# The following two functions do similar things to the two above.
+# Except instead of being registered as matrix entries, the terms are added to a sum
+# This sum is the variational energy of a given state.
 function update_energy!(ϵ::Vector{Float64}, N_o::Int64, 
 			i::Int64, j::Int64, basis1::BitVector, basis2::BitVector, 
 			v_mat::Vector{Matrix{Float64}}, coefs::Vector{T} where T <: Number)
@@ -213,7 +254,8 @@ function update_energy!(ϵ::Vector{Float64}, N_o::Int64,
 	return
 end
 
-
+# There are two functions for evaluating the variational energy
+# They implement slightly different methods
 function eval_energy(N_o::Int64, 
 			i::Int64, j::Int64, basis1::BitVector, basis2::BitVector, 
 			v_mat::Vector{Matrix{Float64}}, coef::Number)
@@ -260,5 +302,5 @@ function two_body_energy(N_o::Int64, basis::Vector{BitVector},
 end
 
 
-export v1, two_body, two_body_energy
+export v1, two_body, two_body_energy, L⁺L⁻, LplusLminus, LL
 end

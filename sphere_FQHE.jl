@@ -5,18 +5,29 @@ using .PseudoPotential
 using LinearAlgebra
 using Arpack
 using SparseArrays
-
+using ArgMacros
 using BenchmarkTools
 
-function main(fname="")
-    println("----------")
-    println("Full ED of two-body pseudopotential from a given basis file.")
-    println("----------")
+function main()
+    # ================================ READ USER INPUT ================================
+    @inlinearguments begin
+        @argumentrequired String fname "-f" "--filename"
+        @argumentrequired Int k "-n" "--nev"
+    end
 
-    if length(fname)==0
-        println("Input basis file name: ")
-        fname = readline()
-    end    
+    println("============================================================")
+    println("      FULL-ED OF TWO-BODY INTERACTION ON THE SPHERE")
+    println("============================================================")
+
+    println("Reading basis vectors from [$(fname)]")
+    
+    basis = readwf(fname).basis
+
+    N_o = length(basis[1])
+    d   = length(basis) # Dimension
+
+
+    println("$(N_o) orbitals.")
 
     basis = readwf(fname).basis
 
@@ -49,6 +60,7 @@ function main(fname="")
 
     #@time basis, dim = getbasis(filewf, N_o, N_e)
 
+    # ======================== CONSTRUCT AND DIAGONALIZE HAMILTONIAN ======================
     println("--------")
     println("Constructing the Hamiltonian")
 
@@ -60,10 +72,11 @@ function main(fname="")
 
     println("Diagonalizing with ARPACK")
 
-    @time λ, ϕ = eigs(H_matrix, which=:SM)
+    @time λ, ϕ = eigs(H_matrix, nev=k,which=:SM)
 
     #display(ϕ)
 
+    # ====================== SAVE GROUND STATE =======================
     println("Eigenvalues = ")
     display(real.(λ))
 
