@@ -189,6 +189,7 @@ end
 
 c₊(s::Number,m::Number) = √(s*(s+1) - m*(m+1))
 c₋(s::Number,m::Number) = √(s*(s+1) - m*(m-1))
+
 # This is the matrix for L^+ L^- given a basis
 function L⁺L⁻(basis::Vector{BitVector})
 	dim = length(basis)
@@ -292,7 +293,9 @@ function two_body_energy(N_o::Int64, basis::Vector{BitVector},
 	println("s = $s")
 	println("Calculating the CG coefficients in advance")
 	energy = [0.0]
-	@time vmat = [pp_matrix(s,v_list[i]) for i in 1:length(v_list)]
+	# The single-particle pseudopotential matrix is modified by the square root of the coefficient.
+	# This is because the energy contribution is always the product of two entries.
+	@time vmat = [pp_matrix(s,v_list[i]).*sqrt(c_list[i]) for i in 1:length(v_list)]
 	#energy = sum(k->eval_energy(N_o, k[1],k[2], basis[k[1]], basis[k[2]], vmat, conj(coefs[k[1]])*coefs[k[2]]), with_replacement_combinations(1:dim,2))
 	for k in with_replacement_combinations(1:dim,2)
 		update_energy!(energy, N_o, k[1],k[2], basis[k[1]], basis[k[2]], vmat, coefs)

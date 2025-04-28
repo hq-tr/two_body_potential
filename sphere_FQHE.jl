@@ -13,6 +13,7 @@ function main()
     @inlinearguments begin
         @argumentrequired String fname "-f" "--filename"
         @argumentrequired Int k "-n" "--nev"
+        @argumentdefault String "" intname "-i" "--interaction-file"
     end
 
     println("============================================================")
@@ -42,19 +43,33 @@ function main()
     v_list = Int32[]
     c_list = Float64[]
 
-    reading = true
-    while reading
-        data = readline()
-        if data == "0"
-            reading = false
-        else
-            try
-                pp = split(data)
-                push!(v_list,parse(Int32, pp[1]))
-                push!(c_list,parse(Float64,pp[2]))
-            catch
-                println("Invalid input. Try again or input 0 to end.")
+    if length(intname) == 0
+        reading = true
+        while reading
+            data = readline()
+            if data == "0"
+                reading = false
+            else
+                try
+                    pp = split(data)
+                    push!(v_list,parse(Int32, pp[1]))
+                    push!(c_list,parse(Float64,pp[2]))
+                catch
+                    println("Invalid input. Try again or input 0 to end.")
+                end
             end
+        end
+    else
+        if isfile(intname)
+            open(intname) do f
+                for line in map(s->split(s),readlines(f))
+                    append!(v_list,parse(Int32,line[1]))
+                    append!(c_list,parse(Float64,line[2]))
+                end
+            end
+        else
+            print("Interaction file '$(intname)' not found. Terminating.")
+            return false
         end
     end
 
