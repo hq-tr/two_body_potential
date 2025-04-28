@@ -16,6 +16,7 @@ function main()
         @argumentrequired String fname "-f" "--file-name-root"
         @argumentrequired Int dim "-d" "--dimension"
         @argumentrequired String intname "-i" "--interaction-file"
+        @argumentflag noeigenstate "--no-eigenstate"
     end
 
     println("============")
@@ -90,6 +91,15 @@ function main()
         display(ϵ)
     end
 
+    # Save the eigenstates
+    if !noeigenstate
+        for i in 1:dim
+            state_coef = coefs * vecs[:,i]
+            state = FQH_state(basis, state_coef)
+            printwf(state;"g_$(i-1)")
+            i+=1
+        end
+    end
 
     return true
 #    println(transpose(ϕ))
