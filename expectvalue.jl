@@ -5,18 +5,20 @@ using .PseudoPotential
 using LinearAlgebra
 using Arpack
 using SparseArrays
+using ArgMacros
 
 using BenchmarkTools
 
 using Random
 
 function main()
+    @inlinearguments begin
+        @argumentrequired String fname "-f" "--file-name"
+        @argumentrequired String intname "-i" "--interaction-file"
+    end
     println("Calculate two-body pseudopotential variational energy of a given state.")
 
-
-    println("Input state file name: ")
-
-    state = readwf(readline())
+    state = readwf(fname)
 
     basis = state.basis
     coefs = state.coef
@@ -26,29 +28,25 @@ function main()
 
     #@time basis, dim = getbasis(filewf, N_o, N_e)
 
-    println("Input m for Vₘ and the corresponding coefficient. ")
-    println("Each pp term takes one line, with two numbers separated by a space.")
-    println("Put a 0 to end")
-
 
     v_list = Int32[]
     c_list = Float64[]
 
-    reading = true
-    while reading
-        data = readline()
-        if data == "0"
-            reading = false
-        else
-            try
-                pp = split(data)
-                push!(v_list,parse(Int32, pp[1]))
-                push!(c_list,parse(Float64,pp[2]))
-            catch
-                println("Invalid input. Try again or input 0 to end.")
+    v_list = Int32[]
+    c_list = Float64[]
+
+    if isfile(intname)
+        open(intname) do f
+            for line in map(s->split(s),readlines(f))
+                append!(v_list,parse(Int32,line[1]))
+                append!(c_list,parse(Float64,line[2]))
             end
         end
+    else
+        print("Interaction file '$(intname)' not found. Terminating.")
+        return false
     end
+
     println("--------")
     println("Constructing the Hamiltonian")
 

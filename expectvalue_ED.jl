@@ -96,7 +96,7 @@ function main()
         for i in 1:dim
             state_coef = coefs * vecs[:,i]
             state = FQH_state(basis, state_coef)
-            printwf(state;"g_$(i-1)")
+            printwf(state;fname="g_$(i-1)")
             i+=1
         end
     end
