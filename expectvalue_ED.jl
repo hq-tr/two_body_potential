@@ -1,5 +1,5 @@
 include("/home/trung/_qhe-julia/FQH_state_v2.jl")
-include("/home/trung/two_body_potential/v1_sphere.jl")
+include("/home/trung/two_body_potential/PseudoPotentials.jl")
 using .FQH_states
 using .PseudoPotential
 using LinearAlgebra
@@ -16,9 +16,34 @@ function main()
         @argumentrequired String fname "-f" "--file-name-root"
         #@argumentrequired Int dim "-d" "--dimension"
         @argumentrequired String intname "-i" "--interaction-file"
+        @argumentdefault String "sphere" geometry "-g" "--geometry"
+        @argumentflag debug "--debug"
+        @argumentflag no_eigenstate "--no-eigenstate"
     end
 
-println("============")
+    geom = lowercase(geometry)
+
+    if geom=="sphere"
+        println("---------------------------------------------------")
+        println("")
+        println("Exact Diagonalization on the Sphere")
+        println("")
+        println("---------------------------------------------------")
+    elseif geom=="disk"
+        println("---------------------------------------------------")
+        println("")
+        println("Exact Diagonalization on the Disk")
+        println("")
+        println("---------------------------------------------------")
+    else
+        println("")
+        println("The geometry as indicated by the '-g' or '--geometry' argument must be either 'sphere' or 'disk'.")
+        println("The program will now terminate.")
+        println("")
+        return
+    end
+
+    println("============")
     println("IMPORTANT: all the input states must contain the same monomial basis listed in the same order.")
     println("The input files must be named in the following format: <name root><index>")
     println("where <index> is an integer from 0 to dim-1.")
@@ -72,7 +97,7 @@ println("============")
 
     #@time ϵ = two_body_energy(N_o, basis, coefs, v_list, c_list)
 
-    @time H_matrix = two_body(N_o, basis, v_list, c_list)
+    @time H_matrix = two_body(N_o, basis, v_list, c_list;geom=geom)
     display(H_matrix)
 
     println("--------")
@@ -83,6 +108,12 @@ println("============")
         println("--------")
     else
         @time mat = coefs' * H_matrix * coefs
+        if debug
+            println("\n=======")
+            println("\t[DEBUG MESSAGE] The Hamiltonian Matrix is:")
+            display(mat)
+            println("=======\n")
+        end
         ϵ = eigvals(mat)
         println("The eigenvalues are")
         display(ϵ)
@@ -100,13 +131,15 @@ println("============")
         end
 
         # Save the eigenstates
-        vecs = eigvecs(mat)
+        if !no_eigenstate
+            vecs = eigvecs(mat)
 
-        for i in 1:d
-            state_coef = coefs * vecs[:,i]
-            state = FQH_state(basis, state_coef)
-            printwf(state;fname="$(dirname)/g_$(i-1)")
-            i+=1
+            for i in 1:d
+                state_coef = coefs * vecs[:,i]
+                state = FQH_state(basis, state_coef)
+                printwf(state;fname="$(dirname)/g_$(i-1)")
+                i+=1
+            end
         end
     end
     
