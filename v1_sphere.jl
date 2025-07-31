@@ -189,7 +189,6 @@ end
 
 c₊(s::Number,m::Number) = √(s*(s+1) - m*(m+1))
 c₋(s::Number,m::Number) = √(s*(s+1) - m*(m-1))
-
 # This is the matrix for L^+ L^- given a basis
 function L⁺L⁻(basis::Vector{BitVector})
 	dim = length(basis)

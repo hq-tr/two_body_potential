@@ -1,10 +1,5 @@
-======= 2025-04-28 =======
- - Added an option to save eigenstates in expectvalue_ED.jl. Can be turned off by the --no-eigenstate flag to save disk space.
-
-======= 2025-04-14 =======
- - Fixed the bug in expectvalue for interaction containing multiple term
- - Created expectvalue_ED.jl that allows exact diagonalization of two-body potential within a Hilbert space spanned by a given basis
- - Modified all routines to take in in-line arguments instead of keyboard input
+======= 2025-07-29 =======
+ - Added routines for the disk 
 ======= 2024-02-28 =======
  - Added L⁺L⁻ to v1_sphere.jl
  - Added sphere_FQHE_L2 for ED of L⁺L⁻
