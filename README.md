@@ -5,7 +5,7 @@ by Ha Quang Trung and Fong Wan Hang
 
 - This is a routine for various calculation regarding one- and two-body pseudopotentials on Landau levels. It can evaluate variational energy (with `expectvalue.jl`) and ED (with `sphere_FQHE.jl`).
 
-- This incorporate the routines in `/sphere_FQHE_parallel/` and `/expectvalue/` into a single Julia library. It has been optimize and is on par with these C++ routines. The Julia routines also has additional features not present in their C++ counterparts.
+- This incorporate the routines in `/sphere_FQHE_parallel/` and `/expectvalue/` into a single Julia library. It has been (mostly) optimized and is on par with these C++ routines. The Julia routines also has additional features not present in their C++ counterparts.
 
 
 ## USAGE
