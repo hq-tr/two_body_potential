@@ -1,4 +1,4 @@
-# Two-body potential exact diagonalization (ED)
+# One-body and Two-body Potential Exact Diagonalization (ED)
 by Ha Quang Trung and Fong Wan Hang
 
 ## DESCRIPTION
