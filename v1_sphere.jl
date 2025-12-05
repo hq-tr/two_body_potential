@@ -70,18 +70,24 @@ function update_element!(H_matrix::SparseMatrixCSC{Float64}, N_o::Int64, i::Int6
 		basis = findall(basis1)
 		H_matrix[i,j] = sum(map(k->abs2(v_mat[k[1],k[2]]), combinations(basis,2)))
 	else
-		b = basis1 .⊻ basis2
-		
-		if sum(b) == 4
-			m1m2 = findall(basis1 .& b)
-			m3m4 = findall(basis2 .& b)
-			if sum(m1m2) == sum(m3m4)
-				c = count(basis1[m1m2[1]:m1m2[2]])
-				d = count(basis2[m3m4[1]:m3m4[2]])
-				H_matrix[i,j] = (-1)^(c+d) * v_mat[m1m2[1], m1m2[2]] * v_mat[m3m4[1],m3m4[2]]
-				H_matrix[j,i] = H_matrix[i,j]
+		#if findLz(basis1) == findLz(basis2) 
+		# findLz() takes as many heap allocations as .⊻
+		# Therefore it is more efficient to by pass this check
+		# The check is done below at sum(m1m2) = sum(m3m4)
+			#b = basis1 .⊻ basis2
+			m1m2 = findall(basis1 .& .!basis2)
+			#if sum(b) == 4
+			if length(m1m2) == 2
+				#m1m2 = findall(basis1 .& b)
+				m3m4 = findall(basis2 .& .!basis1)
+				if sum(m1m2) == sum(m3m4)
+					c = count(basis1[m1m2[1]:m1m2[2]])
+					d = count(basis2[m3m4[1]:m3m4[2]])
+					H_matrix[i,j] = (-1)^(c+d) * v_mat[m1m2[1], m1m2[2]] * v_mat[m3m4[1],m3m4[2]]
+					H_matrix[j,i] = H_matrix[i,j]
+				end
 			end
-		end
+		#end
 	end
 	return
 end
@@ -89,32 +95,34 @@ end
 
 # This is the old version: calculate the CG coefficients on the fly.
 function update_element!(H_matrix::SparseMatrixCSC{Float64}, N_o::Int64, i::Int64, j::Int64, basis1::BitVector, basis2::BitVector)#; quiet=true)
-	s = (N_o - 1)/2
-	b = basis1 .⊻ basis2
-	
-	if sum(b) == 4
-		m1m2 = bin2dex(basis1 .& b)
-		m3m4 = bin2dex(basis2 .& b)
-		if sum(m1m2) == sum(m3m4)
-			#basis1_dex = bin2dex(basis1)
-			#basis2_dex = bin2dex(basis2)
-			m1 = m1m2[1] - s
-			m2 = m1m2[2] - s
-			m3 = m3m4[1] - s
-			m4 = m3m4[2] - s
-			c = count(basis1[m1m2[1]+1:m1m2[2]+1])
-			d = count(basis2[m3m4[1]+1:m3m4[2]+1])
-			#c = findfirst(x -> x == m2+s, basis1_dex) - findfirst(x -> x == m1+s, basis1_dex) - 1
-			#d = findfirst(x -> x == m4+s, basis2_dex) - findfirst(x -> x == m3+s, basis2_dex) - 1
-#			println("$s $(m1) $s $(m2) $(2*s-1) $(m1+m2) $s $(m3) $s $(m4) $(2*s-1) $(m3+m4)")
-			H_matrix[i,j] = (-1)^(c+d)*clebschgordan(Float64, s, m1, s, m2, (2*s-1), m1+m2) * clebschgordan(Float64, s, m3, s, m4, (2*s-1), m3+m4)
-			#H_matrix[i,j] = (-1)^(c+d) * v_mat[m1m2[1], m1m2[2]] * v_mat[m3m4[1],m3m4[2]]
-			H_matrix[j,i] = H_matrix[i,j]
+	#if findLz(basis1) == findLz(basis2)
+		s = (N_o - 1)/2
+		b = basis1 .⊻ basis2
+		
+		if sum(b) == 4
+			m1m2 = bin2dex(basis1 .& b)
+			m3m4 = bin2dex(basis2 .& b)
+			if sum(m1m2) == sum(m3m4)
+				#basis1_dex = bin2dex(basis1)
+				#basis2_dex = bin2dex(basis2)
+				m1 = m1m2[1] - s
+				m2 = m1m2[2] - s
+				m3 = m3m4[1] - s
+				m4 = m3m4[2] - s
+				c = count(basis1[m1m2[1]+1:m1m2[2]+1])
+				d = count(basis2[m3m4[1]+1:m3m4[2]+1])
+				#c = findfirst(x -> x == m2+s, basis1_dex) - findfirst(x -> x == m1+s, basis1_dex) - 1
+				#d = findfirst(x -> x == m4+s, basis2_dex) - findfirst(x -> x == m3+s, basis2_dex) - 1
+				#println("$s $(m1) $s $(m2) $(2*s-1) $(m1+m2) $s $(m3) $s $(m4) $(2*s-1) $(m3+m4)")
+				H_matrix[i,j] = (-1)^(c+d)*clebschgordan(Float64, s, m1, s, m2, (2*s-1), m1+m2) * clebschgordan(Float64, s, m3, s, m4, (2*s-1), m3+m4)
+				#H_matrix[i,j] = (-1)^(c+d) * v_mat[m1m2[1], m1m2[2]] * v_mat[m3m4[1],m3m4[2]]
+				H_matrix[j,i] = H_matrix[i,j]
+			end
+		elseif sum(b) == 0
+			basis = bin2dex(basis1) .- s
+			H_matrix[i,j] = sum(map(k->abs2(clebschgordan(Float64, s, k[1], s, k[2], (2*s-1), k[1]+k[2])), combinations(basis,2)))
 		end
-	elseif sum(b) == 0
-		basis = bin2dex(basis1) .- s
-		H_matrix[i,j] = sum(map(k->abs2(clebschgordan(Float64, s, k[1], s, k[2], (2*s-1), k[1]+k[2])), combinations(basis,2)))
-	end
+	#end
 	return
 end
 
@@ -169,18 +177,30 @@ end
 
 # This is the matrix for two-body interaction given a basis
 function two_body(N_o::Int64, basis::Vector{BitVector},
-				v_list::Vector{Int32}, c_list::Vector{Float64})
+				v_list::Vector{Int32}, c_list::Vector{Float64};verbose=false)
 	dim = length(basis)
-	println("The dimension is $(dim)")
 	s = (N_o-1)/2
-	println("s = $s")
+	if verbose
+		println("The dimension is $(dim)")
+		println("s = $s")
+	end
 	vmat = [pp_matrix(s,v_list[i]) * sqrt(c_list[i]) for i in 1:length(v_list)]
 	H_matrix = spzeros(dim, dim)
+	if verbose
+		print("Check Lz of all basis. ")
+		@time Lz_list  = [findLz(vec) for vec in basis] 
+	else
+		Lz_list  = [findLz(vec) for vec in basis] 
+	end
 	for i in 1:dim
-		#print("\rRow $(i+1)\t\t")
+		if verbose && ((i-1)%(dim÷100) == 0)
+			print("\rProgress: $(i÷(dim÷100))%\t\t")
+		end
 		for j in i:dim
-			update_element!(H_matrix, N_o, i, j, basis[i], basis[j],vmat)#; quiet=quiet)
-			#print("\r$i\t$j\t\t")
+			if Lz_list[i] == Lz_list[j]
+				update_element!(H_matrix, N_o, i, j, basis[i], basis[j],vmat)#; quiet=quiet)
+				#print("\r$i\t$j\t\t")
+			end
 		end
 	end
 #	display(H_matrix)
