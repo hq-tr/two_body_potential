@@ -1,7 +1,7 @@
 include("/home/trung/_qhe-julia/FQH_state_v2.jl")
 include("/home/trung/_qhe-julia/HilbertSpace.jl")
 include("/home/trung/_qhe-julia/Potentials.jl")
-include("v1_sphere.jl")
+include("PseudoPotentials.jl")
 using .FQH_states
 using .PseudoPotential
 using .HilbertSpaceGenerator
@@ -131,9 +131,9 @@ function main()
     println("Constructing the Hamiltonian")
 
     if length(v_list) > 0
-        @time H_matrix = two_body(N_o, basis, v_list, c_list)#; quiet=true)
+        @time H_matrix = two_body_sphere(N_o, basis, v_list, c_list)#; quiet=true)
     else
-        @time H_matrix = spzeros(Complex{Float64},(d,d))
+        @time H_matrix = spzeros(ComplexF64,(d,d))
     end
 
     @time for i in 1:npins

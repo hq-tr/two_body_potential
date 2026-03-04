@@ -9,6 +9,78 @@ using WignerSymbols
 include("/home/trung/_qhe-julia/Misc.jl")
 using .MiscRoutine
 
+function get_rows_and_cols(basis::Vector{BitVector})
+    d = length(basis)
+    if d==0
+    	return UInt64[],UInt64[]
+    end
+    n_orb = length(basis[1])
+
+    #for b in basis
+    #   println(bitstring(b))
+    #end
+
+    # Initialize the rows and cols vectors with diagonal terms
+    rows = UInt64.(1:d)
+    cols = UInt64.(1:d)
+
+    # For every element in basis, find all other elements with which it gives non-zero matrix elements
+    for (index1,basis1) in enumerate(basis)
+        #print("\r   Checking basis $(index1) of $d\t\t\t")
+        basis1_dex = bin2dex(basis1)
+
+        # One-body c†_m2 c_m1
+        # if onebody
+        #     for m1 in basis1_dex
+        #         for m2 in (m1+1):(n_orb-1) #only check m2 > m1
+                    
+        #             if m2 in basis1_dex continue end # Make sure m2 is not an electron
+
+        #             basis2 = basis1 - 2^m1 + 2^m2
+        #             basis2 = copy(basis1)
+        #             basis2[m1] = false
+        #             basis2[m2] = true
+        #             index2 = findfirst(x->x==basis2,basis)
+
+        #             push!(rows,index1)
+        #             push!(cols,index2)
+        #             push!(rows,index2)
+        #             push!(cols,index1)
+
+        #         end
+        #     end
+        # end
+
+        # Two-body c†_m3 c†_m4 c_m1 c_m2 (m3 < m1 < m2 < m4)
+        #if twobody
+            for (m1,m2) in combinations(basis1_dex,2)
+                for m4 in (m2+1):min(n_orb-1,m2+m1)
+                    if m4 in basis1_dex continue end
+                    m3 = m1+m2-m4
+                    if m3 in basis1_dex continue end
+                    if m3 > n_orb-1 continue end
+
+                    basis2 = copy(basis1)
+                    basis2[m1+1] = false
+                    basis2[m2+1] = false
+                    basis2[m3+1] = true
+                    basis2[m4+1] = true
+                    index2 = findfirst(x->x==basis2,basis)
+                    if index2 == nothing continue end
+                    if index2 > d continue end
+                    if basis[index2] != basis2 continue end
+
+                    push!(rows,index1)
+                    push!(cols,index2)
+                    push!(rows,index2)
+                    push!(cols,index1)
+                end
+            end
+        #end
+    end
+    return rows,cols
+end
+
 function pp_matrix(s::Float64, m::Int)
 	dim = Int(2s+1)
 	mat = zeros(dim,dim)
@@ -159,7 +231,14 @@ function two_body_sphere(N_o::Int64, basis::Vector{BitVector},
 	s = (N_o-1)/2
 	println("s = $s")
 	vmat = [pp_matrix(s,v_list[i]) * sqrt(c_list[i]) for i in 1:length(v_list)]
-	H_matrix = spzeros(dim, dim)
+	
+	datatype = all(typeof.(c_list) .<: Real) ? Float64 : ComplexF64
+
+	rows,cols = get_rows_and_cols(basis)
+	nnz = length(rows)
+	H_matrix = spzeros(datatype,rows,cols,dim, dim)
+	println("Pre-allocated a matrix with $nnz non-zero elements of type $datatype")
+	
 	for i in 1:dim
 		#print("\rRow $(i+1)\t\t")
 		for j in i:dim
@@ -335,7 +414,12 @@ function two_body_disk(N_o::Int64, basis::Vector{BitVector},
 	dim = length(basis)
 	println("The dimension is $(dim)")
 
-	H_matrix = spzeros(dim, dim)
+	datatype = all(typeof.(c_list) .<: Real) ? Float64 : ComplexF64
+
+	rows,cols = get_rows_and_cols(basis)
+	nnz = length(rows)
+	H_matrix = spzeros(datatype,rows,cols,dim, dim)
+	println("Pre-allocated a matrix with $nnz non-zero elements of type $datatype")
 	for i in 1:dim
 		#print("\rRow $(i+1)\t\t")
 		for j in i:dim
