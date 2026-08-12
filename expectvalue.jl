@@ -15,10 +15,21 @@ function main()
     @inlinearguments begin
         @argumentrequired String fname "-f" "--file-name"
         @argumentrequired String intname "-i" "--interaction-file"
+        @argumentflag decimal "--decimal"
+        @argumentoptional Int N_o "--n_orb" "-o"
     end
     println("Calculate two-body pseudopotential variational energy of a given state.")
 
-    state = readwf(fname)
+    if decimal && N_o == nothing
+        println("For decimal format, the number of orbital must be specified with '--n_orb'.")
+        return
+    end
+
+    if decimal
+        state = readwfdec(fname,N_o)
+    else
+        state = readwf(fname)
+    end
 
     basis = state.basis
     coefs = state.coef
