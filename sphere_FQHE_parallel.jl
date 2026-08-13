@@ -266,6 +266,7 @@ function main()
     println("Diagonalizing with ARPACK")
 
     @time λ, ϕ = eigs(H_matrix, nev=k,which=:SM)
+    λ = λ ./ 2 # to be consistent with the single-core version
 
     #display(ϕ)
 
