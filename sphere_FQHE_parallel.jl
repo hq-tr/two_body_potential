@@ -237,6 +237,7 @@ function main()
     # Construct one-body
     if npins > 0
         println("\nConstructing the one-body matrix")
+        pinsize_list = ones(Int,npins)
         oneBody = get_oneBody_widebump(n_orb,θ_list, ϕ_list, pinsize_list)
         @time begin
             for subzone = 1:numzones1bd
