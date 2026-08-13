@@ -59,6 +59,7 @@ A multi-cpu version, `sphere_FQHE_parallel.jl` is also included -- taken from [s
 - The number of electrons and number of orbitals are required arguments, even if a basis is supplied.
 - In the output wavefunctions, the basis will be sorted by ascending order in their decimal representation.
 - Two "subzone" arguments, `-z` and `-Z` for the one-body and the two-body components of the Hamiltonian, respectively. The main idea is the higher the number (default=1), the more aggressive garbage collecting will be. This saves memory during the intermediate calculations, but slightly slows down the overall performance.
+- This versions only works with all potential pins having the same strength. 
 
 ### Using expectvalue_ED.jl
 (To be updated later)

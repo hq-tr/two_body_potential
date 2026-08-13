@@ -242,7 +242,7 @@ function main()
         @time begin
             for subzone = 1:numzones1bd
                 print("\r   Working on subzone $(subzone)/$(numzones1bd)\t\t\t")
-                calcT!(H_matrix,oneBody,basis,subzone,λ;num_zones=numzones1bd)
+                calcT!(H_matrix,oneBody,basis,subzone,1.0;num_zones=numzones1bd)
             end
             println("Done!")
         end
