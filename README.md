@@ -54,7 +54,7 @@ Note that if both options are specified, the first option will override the seco
 4. Specifying the number of eigenvalues and eigenvectors to obtain
 	- This is done by the `-n` tag. By default, this number is 5.
 
-A multi-cpu version, `sphere_FQHE_parallel.jl` is also included. This version has some differences compared to the single-core counterpart:
+A multi-cpu version, `sphere_FQHE_parallel.jl` is also included -- taken from [sphere_FQHE_parallel](https://github.com/hq-tr/sphere_FQHE_pins_parallel_v6), courtesy of Wenqi Yang. This version has some differences compared to the single-core counterpart:
 
 - The number of electrons and number of orbitals are required arguments, even if a basis is supplied.
 - In the output wavefunctions, the basis will be sorted by ascending order in their decimal representation.
