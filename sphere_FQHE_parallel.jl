@@ -280,7 +280,7 @@ function main()
 
     open("$(dirname)/eigen.txt","w+") do f
         for value in λ
-            write(f,"$(value)\n")
+            write(f,"$(real(value))\n")
         end
     end
 
