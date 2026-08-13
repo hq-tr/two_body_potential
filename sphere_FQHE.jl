@@ -140,8 +140,8 @@ function main()
         H_matrix += sphere_point_matrix(basis, θ_list[i], ϕ_list[i], V_list[i])
     end
 
-    println("Hamiltonian matrix = ")
-    display(H_matrix)
+    #println("Hamiltonian matrix = ")
+    #display(H_matrix)
 
     println("--------")
 
