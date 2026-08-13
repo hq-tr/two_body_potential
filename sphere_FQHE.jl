@@ -24,12 +24,14 @@ function main()
         @argumentoptional Int n_orb "-o" "--n_orb"
         @argumentoptional Float64 L_z "-Lz" "--Lz"
         @argumentdefault Float64 3.141592653589793 angle_multiplier "--angle-multiplier" 
+        @argumentflag verbose "--verbose"
     end
 
-    println("============================================================")
-    println("      FULL-ED OF TWO-BODY INTERACTION ON THE SPHERE")
-    println("============================================================")
-
+    if verbose
+        println("============================================================")
+        println("      FULL-ED OF TWO-BODY INTERACTION ON THE SPHERE")
+        println("============================================================")
+    end
     # Reading basis input
     if n_el != nothing && n_orb != nothing
         if L_z == nothing
@@ -44,7 +46,7 @@ function main()
     elseif length(fname) > 0
         println("Reading basis vectors from [$(fname)]")
         
-        basis = readwf(fname).basis
+        basis = readwf(fname;verbose=verbose).basis
 
         outname = fname
     else
@@ -84,7 +86,9 @@ function main()
                 end
             end
         else
-            println("Reading interaction from $(intname).")
+            if verbose
+                println("Reading interaction from $(intname).")
+            end
             if isfile(intname)
                 open(intname) do f
                     for line in map(s->split(s),readlines(f))
@@ -105,7 +109,9 @@ function main()
     V_list = Float64[]
     if length(pinname) > 0
         if isfile(pinname)
-            println("Reading pinning potential data from $(pinname).")
+            if verbose
+                println("Reading pinning potential data from $(pinname).")
+            end
             open(pinname) do f
                 for line in map(s->split(s),readlines(f))
                     append!(θ_list,parse(Float64,line[1])*angle_multiplier)
@@ -118,7 +124,9 @@ function main()
         end
     end
     npins = length(θ_list)
-    println("$npins pin(s).")
+    if verbose
+        println("$npins pin(s).")
+    end
     if npins > 0
         pinappendname = "$(pinname)_"
     else
@@ -127,8 +135,10 @@ function main()
     #@time basis, dim = getbasis(filewf, N_o, N_e)
 
     # ======================== CONSTRUCT AND DIAGONALIZE HAMILTONIAN ======================
-    println("--------")
-    println("Constructing the Hamiltonian")
+    if verbose
+        println("--------")
+        println("Constructing the Hamiltonian")
+    end
 
     if length(v_list) > 0
         @time H_matrix = two_body_sphere(N_o, basis, v_list, c_list)#; quiet=true)
@@ -140,14 +150,23 @@ function main()
         H_matrix += sphere_point_matrix(basis, θ_list[i], ϕ_list[i], V_list[i])
     end
 
-    #println("Hamiltonian matrix = ")
-    #display(H_matrix)
+    if verbose
+        println("Hamiltonian matrix = ")
+        display(H_matrix) 
+    end
+    open("matrix.dat","w+") do f
+        matnz = findnz(H_matrix)
+        for i in 1:length(matnz[1])
+            write(f,"$(matnz[1][i]),$(matnz[2][i]),$(matnz[3][i])\n")
+        end
+    end
 
-    println("--------")
+    if verbose
+        println("--------")
+        println("Diagonalizing with ARPACK")
+    end
 
-    println("Diagonalizing with ARPACK")
-
-    @time λ, ϕ = eigs(H_matrix, nev=k,which=:SM)
+    @time λ, ϕ = eigs(H_matrix, nev=k,which=:SR)
 
     #display(ϕ)
 
