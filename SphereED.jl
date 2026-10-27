@@ -242,7 +242,7 @@ function calcV!(V::SparseMatrixCSC{ComplexF64, UInt64},twoBody::Vector{Tuple{Com
                 continue
             end
             if VERSION >= v"1.12"
-                tid = Threads.nthreads() > 1 ? Threads.threadid() - 1 : Threads.threadid()
+                tid = Threads.nthreads() > 1 ? Threads.threadid() - 1 : 1
             else
                 tid = Threads.threadid()
             end
@@ -266,11 +266,70 @@ function calcV!(V::SparseMatrixCSC{ComplexF64, UInt64},twoBody::Vector{Tuple{Com
     rows=nothing
     cols=nothing
     vals=nothing
-    GC.gc() 
+    GC.gc()
     return
 end
 
-    
+#three-body part of Hamiltonian, each element (v,(i,j,k,l,m,n)) is the term v*c†_i c†_j c†_k c_n c_m c_l (see SphereEDThreeBody.jl)
+function calcV3!(V::SparseMatrixCSC{ComplexF64, UInt64},threeBody::Vector{Tuple{ComplexF64, Tuple{Int64,Int64,Int64,Int64,Int64,Int64}}}, States::Vector{Int64},subzone::Int64;num_zones=10)
+    Rows = [Vector{UInt64}() for _ in 1:Threads.nthreads()]
+    Cols = [Vector{UInt64}() for _ in 1:Threads.nthreads()]
+    Vals = [Vector{ComplexF64}() for _ in 1:Threads.nthreads()]
+    base_size,remainder = divrem(length(threeBody),num_zones)
+    if subzone <= remainder
+        begin_index = (base_size+1)*(subzone-1)+1
+        end_index = (base_size+1)*subzone
+    else
+        begin_index = (base_size+1)*remainder + (subzone-remainder-1)*base_size+1
+        end_index = (base_size+1)*remainder + (subzone-remainder)*base_size
+    end
+    Threads.@threads for ind in begin_index:end_index
+        (v, (i, j, k, l, m, n)) = threeBody[ind]
+        if VERSION >= v"1.12"
+            tid = Threads.nthreads() > 1 ? Threads.threadid() - 1 : 1
+        else
+            tid = Threads.threadid()
+        end
+        for IInd in eachindex(States)
+            I = States[IInd]
+            sign = 1
+            J, sign = C(l, I, sign)
+            J, sign = C(m, J, sign)
+            J, sign = C(n, J, sign)
+            J, sign = CDag(k, J, sign)
+            J, sign = CDag(j, J, sign)
+            J, sign = CDag(i, J, sign)
+            if sign == 0 #if State is anihilated
+                continue
+            end
+            JInd = searchsortedfirst(States,J)
+            if JInd == (length(States)+1) || States[JInd]!=J
+                continue
+            end
+            push!(Rows[tid], JInd)
+            push!(Cols[tid], IInd)
+            push!(Vals[tid], sign*v)
+        end
+    end
+    rows=reduce(vcat,Rows)
+    cols=reduce(vcat,Cols)
+    vals=reduce(vcat,Vals)
+    #FREE UP RAM
+    Rows=nothing
+    Cols=nothing
+    Vals=nothing
+    GC.gc() #garbage collect
+    for (i,(row,col)) in enumerate(zip(rows,cols))
+        V[row,col] += vals[i]
+    end
+    rows=nothing
+    cols=nothing
+    vals=nothing
+    GC.gc()
+    return
+end
+
+
 function calcT(oneBody::Vector{Tuple{ComplexF64, Tuple{Int64, Int64}}}, States::Vector{Int64})::SparseMatrixCSC{ComplexF64, Int64}
     rows = Vector{Int64}()
     cols = Vector{Int64}()
@@ -313,7 +372,7 @@ function calcT!(T::SparseMatrixCSC{ComplexF64,UInt64},oneBody::Vector{Tuple{Comp
     Threads.@threads for i in begin_index:end_index
         (t, (i, j)) = oneBody[i]
         if VERSION >= v"1.12"
-            tid = Threads.nthreads() > 1 ? Threads.threadid() - 1 : Threads.threadid()
+            tid = Threads.nthreads() > 1 ? Threads.threadid() - 1 : 1
         else
             tid = Threads.threadid()
         end
@@ -411,7 +470,7 @@ function calcT!(T::SparseMatrixCSC{ComplexF64,UInt64},oneBody::Vector{Tuple{Comp
     return 
 end
 
-export calcV,calcT,CDag,C,calcV!,calcT!
+export calcV,calcT,CDag,C,calcV!,calcV3!,calcT!
 end
 
 
